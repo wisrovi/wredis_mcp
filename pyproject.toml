@@ -1,0 +1,94 @@
+[project]
+name = "wredis-mcp"
+version = "0.1.0"
+description = "MCP Server for WRedis Architecting"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "William Rodriguez (wisrovi)", email = "wisrovi.rodriguez@gmail.com"}
+]
+keywords = ["mcp", "wredis", "redis", "cache", "queue", "ai", "agent"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "fastmcp>=0.1.0",
+    "pydantic>=2.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/wisrovi/wredis_mcp"
+Repository = "https://github.com/wisrovi/wredis_mcp.git"
+Issues = "https://github.com/wisrovi/wredis_mcp/issues"
+
+[project.scripts]
+wredis-mcp = "wredis_mcp.server:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.15.0",
+    "pylint>=3.2.0",
+    "mypy>=1.8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["wredis_mcp"]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_empty = true
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["D", "E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RUF", "PL", "PT"]
+ignore = ["PLR0913", "PLR2004", "PLC0415", "RUF006", "PLE1142", "RUF010", "F401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+"src/wredis_mcp/server.py" = ["E501"]  # long prose lines in the architect manual
+
+[tool.ruff.lint.isort]
+known-first-party = ["wredis_mcp"]
+combine-as-imports = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

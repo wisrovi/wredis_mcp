@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "wredis-mcp": {
+      "command": "/home/william.rodriguez/miniconda3/bin/python3.13",
+      "args": [
+        "-m",
+        "wredis_mcp.server",
+        "run"
+      ],
+      "env": {}
+    }
+  }
+}
