@@ -7,12 +7,60 @@ on:
     branches: [main, master]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Check ruff
+        run: ruff check src/ tests/ --output-format=github
+
+      - name: Check ruff format
+        run: ruff format --check src/ tests/
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mypy
+
+      - name: Type check
+        run: mypy src/wredis_mcp/
+
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
-
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -26,14 +74,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Lint with ruff
-        run: pip install ruff && ruff check src/wredis_mcp/
-
-      - name: Type check with mypy
-        run: pip install mypy && mypy src/wredis_mcp/
-
       - name: Run tests
-        run: pytest src/wredis_mcp/ -v --tb=short
+        run: pytest tests/ -v --tb=short
 
   coverage:
     runs-on: ubuntu-latest
@@ -51,10 +93,36 @@ jobs:
           pip install -e ".[dev]" pytest-cov
 
       - name: Run tests with coverage
-        run: pytest src/wredis_mcp/ --cov=wredis_mcp --cov-report=xml --cov-report=html
+        run: pytest tests/ --cov=wredis_mcp --cov-report=xml --cov-report=html --cov-fail-under=80
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: htmlcov/
+
+  publish:
+    needs: [lint, typecheck, test, coverage]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*

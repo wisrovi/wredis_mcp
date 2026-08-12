@@ -10,6 +10,7 @@ import sys
 from functools import lru_cache
 
 from mcp.server.fastmcp import FastMCP
+from wredis.sync import BaseManager
 
 from wredis_mcp.catalog import PatternsCatalog
 from wredis_mcp.templates import TemplateGenerator
@@ -318,8 +319,107 @@ def deploy_wredis_scaffolding(
                 f.write(content)
 
         return f"Success: WRedis architecture '{project_name}' deployed at {target_dir}"
-    except Exception as e:  # noqa: BLE001  (any I/O failure becomes a user-facing error message)
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def validate_redis_connection(
+    host: str = "localhost", port: int = 6379, db: int = 0, password: str | None = None
+) -> str:
+    """Validate Redis connectivity and return health status.
+
+    Attempts to connect to Redis and run a health check using WRedis BaseManager.
+    Returns connection details, server info, and latency metrics.
+    """
+    try:
+        m = BaseManager(host=host, port=port, db=db, password=password)
+        healthy = m.health_check()
+        info = m._execute("info", "server")
+        ping_latency = m._execute("ping")
+
+        return (
+            f"✅ Redis Connection Valid\n"
+            f"   Host: {host}:{port} | DB: {db}\n"
+            f"   Ping: {ping_latency}\n"
+            f"   Healthy: {healthy}\n"
+            f"   Server: {info.get('redis_version', 'unknown') if isinstance(info, dict) else info}\n"
+            f"   Mode: {info.get('redis_mode', 'standalone') if isinstance(info, dict) else 'unknown'}\n"
+        )
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        return f"❌ Connection Failed: {type(e).__name__}: {e}"
+
+
+@mcp.tool()
+def generate_from_pattern(pattern_name: str, target_dir: str, project_name: str = "wredis_app") -> str:
+    """Generate a complete project from a specific catalog pattern.
+
+    Fetches the pattern details and deploys a tailored project structure
+    with the appropriate manager, configuration, and example usage.
+    """
+    try:
+        if not os.path.isabs(target_dir):
+            return "Error: target_dir must be an absolute path."
+
+        catalog = get_catalog()
+        patterns = catalog.search(pattern_name)
+        if not patterns:
+            return f"Error: Pattern '{pattern_name}' not found. Use search_wredis_pattern to find available patterns."
+
+        pattern = patterns[0]
+        manager = pattern.get("manager", "")
+        module = pattern.get("module", "")
+
+        # Deploy base scaffolding
+        for folder in TemplateGenerator.get_folders("standard"):
+            os.makedirs(os.path.join(target_dir, folder), exist_ok=True)
+
+        blueprints = TemplateGenerator.get_files_blueprint("standard", project_name)
+        for rel_path, content in blueprints.items():
+            full_path = os.path.join(target_dir, rel_path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        # Create pattern-specific example
+        example_path = os.path.join(target_dir, "examples", f"{pattern_name}.py")
+        os.makedirs(os.path.dirname(example_path), exist_ok=True)
+
+        example_content = _generate_pattern_example(pattern, project_name)
+        with open(example_path, "w", encoding="utf-8") as f:
+            f.write(example_content)
+
+        return (
+            f"Success: Project '{project_name}' generated from pattern '{pattern_name}' at {target_dir}\n"
+            f"  Pattern: {pattern.get('name')}\n"
+            f"  Manager: {manager}\n"
+            f"  Module: {module}\n"
+            f"  Example: examples/{pattern_name}.py"
+        )
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        return f"Error: {str(e)}"
+
+
+def _generate_pattern_example(pattern: dict, project_name: str) -> str:
+    """Generate a pattern-specific example file."""
+    name = pattern.get("name", "pattern")
+    manager = pattern.get("manager", "BaseManager")
+    module = pattern.get("module", "wredis.sync")
+    desc = pattern.get("description", "")
+
+    return (
+        f"# Example: {name}\n"
+        f"# {desc}\n"
+        f"# Generated from WRedis pattern catalog\n\n"
+        f"from {module} import {manager}\n\n"
+        f"def main():\n"
+        f"    # Initialize manager\n"
+        f'    m = {manager}(host="localhost")\n'
+        f"    # TODO: Add pattern-specific usage\n"
+        f"    pass\n\n"
+        f'if __name__ == "__main__":\n'
+        f"    main()\n"
+    )
 
 
 @mcp.tool()
@@ -412,9 +512,9 @@ def start_background():
             stderr=subprocess.STDOUT,
             start_new_session=True,
         ) as proc,
+        open(PID_FILE, "w", encoding="utf-8") as f,
     ):
-        with open(PID_FILE, "w", encoding="utf-8") as f:
-            f.write(str(proc.pid))
+        f.write(str(proc.pid))
     print(f"wredis-mcp started in background (SSE mode) with PID {proc.pid}")
 
 

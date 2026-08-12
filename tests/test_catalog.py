@@ -1,6 +1,7 @@
 import json
 import logging
 from unittest import mock
+from urllib import request
 
 import pytest
 
@@ -15,7 +16,7 @@ def catalog():
 
 def test_init_loads_initial_catalog():
     c = PatternsCatalog()
-    assert len(c.cached_patterns) == 14
+    assert len(c.cached_patterns) == 23
     assert c.cached_patterns[0]["manager"] == "RedisHashManager"
 
 
@@ -40,7 +41,7 @@ def test_fetch_url_non_200(catalog):
 
 
 def test_fetch_url_exception(catalog, caplog):
-    with mock.patch("urllib.request.urlopen", side_effect=Exception("boom")), caplog.at_level(logging.WARNING):
+    with mock.patch("urllib.request.urlopen", side_effect=request.URLError("boom")), caplog.at_level(logging.WARNING):
         assert catalog._fetch_url("https://example.com/bad.json") == []
     assert "Failed to fetch catalog" in caplog.text
 

@@ -4,7 +4,7 @@ from wredis_mcp.templates import TemplateGenerator
 
 
 def test_get_supported_types():
-    assert TemplateGenerator.get_supported_types() == ["standard", "cache_service"]
+    assert TemplateGenerator.get_supported_types() == ["standard", "cache_service", "full_service"]
 
 
 def test_get_folders_standard():

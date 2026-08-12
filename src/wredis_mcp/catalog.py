@@ -30,7 +30,7 @@ class PatternsCatalog:
             with request.urlopen(req, timeout=5) as response:
                 if response.status == 200:
                     return json.loads(response.read().decode("utf-8"))
-        except Exception as e:  # noqa: BLE001  (any network error falls back to local catalog)
+        except (request.URLError, request.HTTPError, TimeoutError, OSError) as e:
             logger.warning(f"Failed to fetch catalog from {url}: {e}")
         return []
 
@@ -202,6 +202,87 @@ class PatternsCatalog:
                 "module": "wredis.ha.cluster",
                 "description": "Distributed Redis Cluster with automatic hash slot routing and failover",
                 "category": "High Availability",
+                "origin": "Official",
+            },
+            {
+                "name": "base_raw_commands",
+                "manager": "BaseManager",
+                "namespace": "wredis.sync",
+                "module": "wredis.sync",
+                "description": "Low-level Redis commands with connection pooling and health checks",
+                "category": "Core",
+                "origin": "Official",
+            },
+            {
+                "name": "cache_with_metrics",
+                "manager": "@cache / @async_cache",
+                "namespace": "wredis.decorators",
+                "module": "wredis.decorators",
+                "description": "Cache-Aside with hit/miss tracking, TTL, and custom prefixes",
+                "category": "Caching",
+                "origin": "Official",
+            },
+            {
+                "name": "retry_on_lock",
+                "manager": "BaseManager",
+                "namespace": "wredis._retry",
+                "module": "wredis._retry",
+                "description": "Automatic retry with exponential backoff on database lock errors",
+                "category": "Resilience",
+                "origin": "Official",
+            },
+            {
+                "name": "serialization_json",
+                "manager": "BaseManager",
+                "namespace": "wredis._serializer",
+                "module": "wredis._serializer",
+                "description": "Automatic JSON serialization for complex types (dict, list, datetime, UUID)",
+                "category": "Core",
+                "origin": "Official",
+            },
+            {
+                "name": "async_hash_operations",
+                "manager": "RedisHashManager",
+                "namespace": "wredis.aio",
+                "module": "wredis.aio",
+                "description": "Async/await hash operations with connection pooling",
+                "category": "Async",
+                "origin": "Official",
+            },
+            {
+                "name": "async_queue_consumer",
+                "manager": "RedisQueueManager",
+                "namespace": "wredis.aio",
+                "module": "wredis.aio",
+                "description": "Async queue consumer with blocking reads and retries",
+                "category": "Async",
+                "origin": "Official",
+            },
+            {
+                "name": "async_stream_consumer",
+                "manager": "RedisStreamManager",
+                "namespace": "wredis.aio",
+                "module": "wredis.aio",
+                "description": "Async stream consumer groups with ACK and replay",
+                "category": "Async",
+                "origin": "Official",
+            },
+            {
+                "name": "validation_strict",
+                "manager": "BaseManager",
+                "namespace": "wredis._validation",
+                "module": "wredis._validation",
+                "description": "Strict input validation for keys, fields, and values",
+                "category": "Validation",
+                "origin": "Official",
+            },
+            {
+                "name": "exception_handling",
+                "manager": "WRedisError",
+                "namespace": "wredis.exceptions",
+                "module": "wredis.exceptions",
+                "description": "Structured exception hierarchy for Redis operations",
+                "category": "Core",
                 "origin": "Official",
             },
         ]

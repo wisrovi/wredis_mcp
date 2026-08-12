@@ -123,6 +123,80 @@ def test_deploy_wredis_scaffolding_relative_path_after_abs():
     assert "absolute path" in text
 
 
+# --- validate_redis_connection tool ---
+
+
+def test_validate_redis_connection_success(tmp_path, monkeypatch):
+    with mock.patch("wredis_mcp.server.BaseManager") as mock_base:
+        mock_instance = mock.Mock()
+        mock_instance.health_check.return_value = True
+        mock_instance._execute.side_effect = lambda *args: (
+            {"redis_version": "7.0.0", "redis_mode": "standalone"} if args[0] == "info" else "PONG"
+        )
+        mock_base.return_value = mock_instance
+
+        result = server.validate_redis_connection(host="localhost", port=6379)
+
+    assert "Redis Connection Valid" in result
+    assert "localhost:6379" in result
+    assert "7.0.0" in result
+    assert "standalone" in result
+    assert "PONG" in result
+
+
+def test_validate_redis_connection_failure():
+    with mock.patch("wredis_mcp.server.BaseManager", side_effect=ConnectionError("refused")):
+        result = server.validate_redis_connection(host="badhost", port=9999)
+
+    assert "Connection Failed" in result
+    assert "ConnectionError" in result
+
+
+# --- generate_from_pattern tool ---
+
+
+def test_generate_from_pattern_success(tmp_path):
+    target = str(tmp_path / "generated")
+    with mock.patch.object(server, "get_catalog") as mock_get_catalog:
+        mock_catalog = mock.Mock()
+        mock_catalog.search.return_value = [
+            {
+                "name": "hash_session_store",
+                "manager": "RedisHashManager",
+                "module": "wredis.hash",
+                "description": "Session storage",
+            }
+        ]
+        mock_get_catalog.return_value = mock_catalog
+
+        result = server.generate_from_pattern("hash_session_store", target, "TestApp")
+
+    assert result.startswith("Success:")
+    assert "TestApp" in result
+    assert "hash_session_store" in result
+    assert (tmp_path / "generated" / "main.py").exists()
+    assert (tmp_path / "generated" / "examples" / "hash_session_store.py").exists()
+
+
+def test_generate_from_pattern_not_found(tmp_path):
+    target = str(tmp_path / "generated")
+    with mock.patch.object(server, "get_catalog") as mock_get_catalog:
+        mock_catalog = mock.Mock()
+        mock_catalog.search.return_value = []
+        mock_get_catalog.return_value = mock_catalog
+
+        result = server.generate_from_pattern("nonexistent", target)
+
+    assert result.startswith("Error:")
+    assert "not found" in result
+
+
+def test_generate_from_pattern_relative_path():
+    result = server.generate_from_pattern("hash", "relative/path")
+    assert result.startswith("Error:")
+    assert "absolute path" in result
+
+
 # --- manual tool ---
 
 
@@ -167,6 +241,8 @@ def test_start_background_when_already_running(tmp_path, monkeypatch):
 def test_start_background_launches_process(tmp_path, monkeypatch):
     monkeypatch.setattr(server, "PID_FILE", str(tmp_path / "pid"))
     proc_mock = mock.MagicMock()
+    proc_mock.__enter__ = mock.Mock(return_value=proc_mock)
+    proc_mock.__exit__ = mock.Mock(return_value=False)
     proc_mock.pid = 4242
     with mock.patch("subprocess.Popen", return_value=proc_mock) as mock_popen:
         server.start_background()
@@ -267,6 +343,8 @@ def test_main_start(monkeypatch, tmp_path):
     monkeypatch.setattr(server, "PID_FILE", str(tmp_path / "pid"))
     monkeypatch.setattr(server.sys, "argv", ["wredis-mcp", "start"])
     proc_mock = mock.MagicMock()
+    proc_mock.__enter__ = mock.Mock(return_value=proc_mock)
+    proc_mock.__exit__ = mock.Mock(return_value=False)
     proc_mock.pid = 555
     with mock.patch("subprocess.Popen", return_value=proc_mock):
         server.main()
