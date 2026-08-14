@@ -69,14 +69,17 @@ def test_get_files_blueprint_content_pieces():
     hash_store = bp["repositories/hash_store.py"]
     assert "class SessionStore" in hash_store
     assert "create_hash" in hash_store
+    assert "delete_hash" in hash_store
 
     queue_store = bp["repositories/queue_store.py"]
     assert "class TaskQueue" in queue_store
     assert "get_queue_length" in queue_store
+    assert "delete_queue" in queue_store
 
     stream_store = bp["repositories/stream_store.py"]
     assert "class EventStream" in stream_store
     assert "add_to_stream" in stream_store
+    assert "delete_stream" in stream_store
 
     main = bp["main.py"]
     assert "run_service" in main

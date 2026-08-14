@@ -87,9 +87,13 @@ class TemplateGenerator:
             "    def all_sessions(self) -> dict | None:\n"
             '        """List every stored session."""\n'
             '        return self._manager.read_all_hash("sessions")\n\n'
-            "    def delete_session(self, session_id: str) -> None:\n"
+            "    def delete_session_field(self, session_id: str) -> None:\n"
             '        """Remove a session field."""\n'
-            '        self._manager.delete_hash_field("sessions", session_id)\n'
+            '        self._manager.delete_hash_field("sessions", session_id)\n\n'
+            "    def delete_session(self, session_id: str) -> bool:\n"
+            '        """Delete the entire session hash (all fields and the key).\n'
+            '        Returns True if deleted, False if not found."""\n'
+            '        return self._manager.delete_hash("sessions")\n'
         )
 
         queue_store_template = (
@@ -114,7 +118,11 @@ class TemplateGenerator:
             "    def worker(self, handler):\n"
             '        """Register a handler and return the manager to start() it."""\n'
             '        self._manager.on_message("tasks")(handler)\n'
-            "        return self._manager\n"
+            "        return self._manager\n\n"
+            "    def delete_queue(self, queue_name: str = \"tasks\") -> bool:\n"
+            '        """Delete the entire queue (all pending messages).\n'
+            '        Returns True if deleted, False if not found."""\n'
+            '        return self._manager.delete_queue(queue_name)\n'
         )
 
         stream_store_template = (
@@ -138,7 +146,11 @@ class TemplateGenerator:
             "        return self._manager\n\n"
             "    def read(self, count: int = 10) -> list:\n"
             '        """Read recent events without a registered consumer."""\n'
-            '        return self._manager.read_from_stream("events", count=count)\n'
+            '        return self._manager.read_from_stream("events", count=count)\n\n'
+            "    def delete_stream(self, stream_name: str = \"events\") -> bool:\n"
+            '        """Delete the entire stream (messages and consumer groups).\n'
+            '        Returns True if deleted, False if not found."""\n'
+            '        return self._manager.delete_stream(stream_name)\n'
         )
 
         set_store_template = (
@@ -164,7 +176,11 @@ class TemplateGenerator:
             "        return self._manager.is_member(key, tag)\n\n"
             "    def remove_tag(self, key: str, tag: str) -> None:\n"
             '        """Remove a tag."""\n'
-            "        self._manager.remove_from_set(key, tag)\n"
+            "        self._manager.remove_from_set(key, tag)\n\n"
+            "    def delete_set(self, key: str) -> bool:\n"
+            '        """Delete the entire set key.\n'
+            '        Returns True if deleted, False if not found."""\n'
+            '        return self._manager.delete_set(key)\n'
         )
 
         sortedset_store_template = (
@@ -190,7 +206,11 @@ class TemplateGenerator:
             "        return self._manager.get_sorted_set_reverse(key, with_scores=with_scores)[:count]\n\n"
             "    def get_rank(self, key: str, member: str) -> int | None:\n"
             '        """Get member rank (0-indexed).""" \n'
-            "        return self._manager.get_rank(key, member)\n"
+            "        return self._manager.get_rank(key, member)\n\n"
+            "    def delete_sorted_set(self, key: str) -> bool:\n"
+            '        """Delete the entire sorted set.\n'
+            '        Returns True if deleted, False if not found."""\n'
+            '        return self._manager.delete_sorted_set(key)\n'
         )
 
         main_template = (
