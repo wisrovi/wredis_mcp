@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.2] - 2026-08-13
+
+### Fixed
+- **Catalog fetch error handling**: `URLError`/`HTTPError` now imported from `urllib.error` (mypy-correct).
+- Formatting normalized via ruff (pre-commit green).
+
+## [0.1.1] - 2026-08-13
+
+### Added
+- **Makefile**: `make publish` for PyPI releases (`test`, `lint`, `build`, `publish`, `clean`).
+
 ## [0.1.0] - 2026-08-12
 
 ### Added

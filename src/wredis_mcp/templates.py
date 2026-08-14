@@ -15,7 +15,16 @@ class TemplateGenerator:
         if scaffold_type == "cache_service":
             return ["config", "cache", "repositories", "tests", ".wredis"]
         if scaffold_type == "full_service":
-            return ["config", "cache", "repositories", "tests", "examples", ".wredis", "scripts", ".github/workflows"]
+            return [
+                "config",
+                "cache",
+                "repositories",
+                "tests",
+                "examples",
+                ".wredis",
+                "scripts",
+                ".github/workflows",
+            ]
         return ["config", "cache", "repositories", "tests", ".wredis"]
 
     @staticmethod

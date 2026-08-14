@@ -49,4 +49,3 @@ disable=
 disable=
     W0613,   # unused-argument (pytest fixture args)
     W0212,   # protected-access (tests exercise private helpers directly)
-

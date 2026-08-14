@@ -49,8 +49,9 @@ def get_wredis_architect_blueprints() -> str:
         'all_users = h.read_all_hash("users")              # -> dict | None\n'
         "# UPDATE (merge into existing field)\n"
         'h.update_hash("users", "user:1", {"age": 31, "plan": "pro"})\n'
-        "# DELETE field / TTL management\n"
+        "# DELETE field / whole hash / TTL management\n"
         'h.delete_hash_field("users", "user:2")\n'
+        'h.delete_hash("users")\n'
         'h.exist("users"); h.get_ttl("users"); h.extend_ttl("users", 7200)\n'
     )
 
@@ -85,6 +86,8 @@ def get_wredis_architect_blueprints() -> str:
         '    print(f"Processing: {data}")\n'
         "s.wait()\n"
         "# s.stop_consumers()  # graceful stop\n"
+        "# DELETE (entire stream - messages and consumer groups)\n"
+        's.delete_stream("events")\n'
     )
 
     # 4. Pub/Sub
@@ -110,8 +113,9 @@ def get_wredis_architect_blueprints() -> str:
         "# READ (all members / membership check)\n"
         'members = s.get_set_members("tags")     # -> set\n'
         'is_py = s.is_member("tags", "python")  # -> bool\n'
-        "# UPDATE (remove members) / TTL\n"
+        "# UPDATE (remove members) / DELETE / TTL\n"
         's.remove_from_set("tags", "redis")\n'
+        's.delete_set("tags")\n'
         's.exist("tags"); s.get_ttl("tags"); s.extend_ttl("tags", 86400)\n'
     )
 
@@ -131,6 +135,7 @@ def get_wredis_architect_blueprints() -> str:
         'bracket = z.get_sorted_set_by_score("leaderboard", 0, 150, with_scores=True)\n'
         "# DELETE (member or whole key) / TTL\n"
         'z.remove_from_sorted_set("leaderboard", "player2")\n'
+        'z.delete_sorted_set("leaderboard")\n'
         'z.set_ttl("leaderboard", 86400); z.get_ttl("leaderboard")\n'
     )
 
@@ -143,8 +148,9 @@ def get_wredis_architect_blueprints() -> str:
         "# READ (bit value / population count)\n"
         'val = b.get_bit("dau:2026-08-12", 42)     # -> 0 | 1\n'
         'count = b.count_bits("dau:2026-08-12")    # -> int\n'
-        "# TTL\n"
+        "# TTL / DELETE\n"
         'b.exist("dau:2026-08-12"); b.get_ttl("dau:2026-08-12"); b.extend_ttl("dau:2026-08-12", 86400)\n'
+        'b.delete_bitmap("dau:2026-08-12")\n'
     )
 
     # 8. HyperLogLog
@@ -157,7 +163,7 @@ def get_wredis_architect_blueprints() -> str:
         'count = hll.count("visitors")\n'
         "# UPDATE (merge multiple HLLs into one)\n"
         'hll.merge("all_visitors", "visitors")\n'
-        'hll.exist("visitors")\n'
+        'hll.exist("visitors"); hll.delete_hyperloglog("visitors")\n'
     )
 
     # 9. Geo
@@ -172,7 +178,7 @@ def get_wredis_architect_blueprints() -> str:
         'dist = g.get_distance("places", "Central Park", "Times Square", unit="km")\n'
         'near = g.search_nearby("places", -73.98, 40.78, radius=5, unit="km")\n'
         'near_d = g.search_nearby_with_distance("places", -73.98, 40.78, radius=5, unit="km")\n'
-        'g.exist("places")\n'
+        'g.exist("places"); g.delete_geo("places")\n'
     )
 
     # 10. Pipeline (batch)
@@ -301,7 +307,9 @@ def search_wredis_pattern(query: str) -> str:
 
 @mcp.tool()
 def deploy_wredis_scaffolding(
-    target_dir: str, project_name: str = "wredis_project", scaffold_type: str = "standard"
+    target_dir: str,
+    project_name: str = "wredis_project",
+    scaffold_type: str = "standard",
 ) -> str:
     """Deploys a professional WRedis project structure following wisrovi standards."""
     try:
@@ -540,7 +548,13 @@ def print_config(write_file: bool = True):
     """Prints or saves the JSON configuration for agents."""
     python_path = sys.executable
     config = {
-        "mcpServers": {"wredis-mcp": {"command": python_path, "args": ["-m", "wredis_mcp.server", "run"], "env": {}}}
+        "mcpServers": {
+            "wredis-mcp": {
+                "command": python_path,
+                "args": ["-m", "wredis_mcp.server", "run"],
+                "env": {},
+            }
+        }
     }
 
     config_json = json.dumps(config, indent=2)
@@ -588,7 +602,9 @@ def main():
         help="Command to execute (default: run)",
     )
     parser.add_argument(
-        "--print", action="store_true", help="Print configuration to stdout instead of saving to .agents/"
+        "--print",
+        action="store_true",
+        help="Print configuration to stdout instead of saving to .agents/",
     )
 
     args = parser.parse_args()

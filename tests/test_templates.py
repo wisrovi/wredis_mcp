@@ -4,15 +4,31 @@ from wredis_mcp.templates import TemplateGenerator
 
 
 def test_get_supported_types():
-    assert TemplateGenerator.get_supported_types() == ["standard", "cache_service", "full_service"]
+    assert TemplateGenerator.get_supported_types() == [
+        "standard",
+        "cache_service",
+        "full_service",
+    ]
 
 
 def test_get_folders_standard():
-    assert TemplateGenerator.get_folders("standard") == ["config", "cache", "repositories", "tests", ".wredis"]
+    assert TemplateGenerator.get_folders("standard") == [
+        "config",
+        "cache",
+        "repositories",
+        "tests",
+        ".wredis",
+    ]
 
 
 def test_get_folders_cache_service():
-    assert TemplateGenerator.get_folders("cache_service") == ["config", "cache", "repositories", "tests", ".wredis"]
+    assert TemplateGenerator.get_folders("cache_service") == [
+        "config",
+        "cache",
+        "repositories",
+        "tests",
+        ".wredis",
+    ]
 
 
 def test_get_files_blueprint_standard_structure():

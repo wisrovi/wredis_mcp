@@ -4,6 +4,7 @@ import json
 import logging
 from contextlib import suppress
 from urllib import request
+from urllib.error import HTTPError, URLError
 
 # Use a module-level logger
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class PatternsCatalog:
             with request.urlopen(req, timeout=5) as response:
                 if response.status == 200:
                     return json.loads(response.read().decode("utf-8"))
-        except (request.URLError, request.HTTPError, TimeoutError, OSError) as e:
+        except (URLError, HTTPError, TimeoutError, OSError) as e:
             logger.warning(f"Failed to fetch catalog from {url}: {e}")
         return []
 

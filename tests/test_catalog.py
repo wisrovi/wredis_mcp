@@ -41,7 +41,10 @@ def test_fetch_url_non_200(catalog):
 
 
 def test_fetch_url_exception(catalog, caplog):
-    with mock.patch("urllib.request.urlopen", side_effect=request.URLError("boom")), caplog.at_level(logging.WARNING):
+    with (
+        mock.patch("urllib.request.urlopen", side_effect=request.URLError("boom")),
+        caplog.at_level(logging.WARNING),
+    ):
         assert catalog._fetch_url("https://example.com/bad.json") == []
     assert "Failed to fetch catalog" in caplog.text
 
@@ -66,8 +69,16 @@ def test_refresh_catalog_keeps_cache_when_empty(catalog):
 
 def test_search_matches_multiple_fields(catalog):
     patterns = [
-        {"name": "hash_session_store", "manager": "RedisHashManager", "description": "sessions"},
-        {"name": "queue_worker", "manager": "RedisQueueManager", "description": "tasks"},
+        {
+            "name": "hash_session_store",
+            "manager": "RedisHashManager",
+            "description": "sessions",
+        },
+        {
+            "name": "queue_worker",
+            "manager": "RedisQueueManager",
+            "description": "tasks",
+        },
     ]
     catalog.cached_patterns = patterns
     assert len(catalog.search("hash")) == 1

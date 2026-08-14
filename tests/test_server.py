@@ -290,7 +290,11 @@ def test_print_config_to_stdout(capsys):
     captured = capsys.readouterr()
     data = _parse_first_json(captured.out)
     assert "wredis-mcp" in data["mcpServers"]
-    assert data["mcpServers"]["wredis-mcp"]["args"] == ["-m", "wredis_mcp.server", "run"]
+    assert data["mcpServers"]["wredis-mcp"]["args"] == [
+        "-m",
+        "wredis_mcp.server",
+        "run",
+    ]
     assert "QUICK INSTALL COMMANDS" in captured.out
     assert "gemini mcp add wredis-mcp" in captured.out
 

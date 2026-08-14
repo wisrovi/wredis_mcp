@@ -1,6 +1,6 @@
 import asyncio
-import sys
 import json
+import sys
 
 from wredis_mcp.catalog import PatternsCatalog
 from wredis_mcp.templates import TemplateGenerator
